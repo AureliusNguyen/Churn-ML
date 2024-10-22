@@ -5,6 +5,7 @@ import pickle
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from utils import *
 
 load_dotenv()
 client = OpenAI(
@@ -59,9 +60,9 @@ def explain_prediction(probability, input_dict, surname):
   Example 1:
   Based on the provided customer information and summary statistics, customer Brownless has a credit score of 581, age of 34, tenure of 1, balance of 101633, number of products of 1, has a credit card of 1, is an inactive member of 0, estimated salary of 110431.51, and belongs to the geography of Germany.
 
-Given that Brownless has a high importance score for Geography_Germany, a significant feature associated with 91.37% of churned customers compared to 45.06% of non-churned customers, this may indicate that geographical location plays a critical role in churning decisions. However, given that their other characteristics are relatively comparable to those of the non-churned customers, it can be noted that while geography may be an influential factor, other aspects of their profile may support the decision to retain them as a customer.
+  Given that Brownless has a high importance score for Geography_Germany, a significant feature associated with 91.37% of churned customers compared to 45.06% of non-churned customers, this may indicate that geographical location plays a critical role in churning decisions. However, given that their other characteristics are relatively comparable to those of the non-churned customers, it can be noted that while geography may be an influential factor, other aspects of their profile may support the decision to retain them as a customer.
 
-Assuming that geographical location plays a significant role, but considering the customer's profile is relatively in line with others, it can be argued that the decision to churn or retain could be influenced by a variety of factors such as communication with the customer or financial history. However, at this point, there is not enough information available to make a definitive judgment, suggesting the customer may not be at a high level of risk to churn.
+  Assuming that geographical location plays a significant role, but considering the customer's profile is relatively in line with others, it can be argued that the decision to churn or retain could be influenced by a variety of factors such as communication with the customer or financial history. However, at this point, there is not enough information available to make a definitive judgment, suggesting the customer may not be at a high level of risk to churn.
   """
 
     print("EXPLANATION PROMPT: ", prompt)
@@ -196,7 +197,7 @@ def make_predictions(input_df, input_dict):
         st.write(f"{model} {prob:.3f}")
     st.write(f"Average Probability: {avg_prob:.3f}")
 
-    return avg_prob
+    return avg_prob, probabilities
 
 
 def make_predictions_2(input_df, input_dict):
@@ -217,7 +218,7 @@ def make_predictions_2(input_df, input_dict):
         st.write(f"{model} Probability: {prob:.3f}")
 
     st.write(f"Average Probability (XGBoost models): {avg_prob:.3f}")
-    return avg_prob
+    return avg_prob, probabilities
 
 
 st.title("Customer Churn Prediction")
@@ -326,10 +327,21 @@ if selected_customer_option:
         estimated_salary,
     )
 
-    avg_prob = make_predictions(input_df, input_dict)
-    avg_prob_2 = make_predictions_2(input_df_2, input_dict_2)
+    avg_prob, probabilities = make_predictions(input_df, input_dict)
+    avg_prob_2, probabilities_2 = make_predictions_2(input_df_2, input_dict_2)
 
     explanation = explain_prediction(avg_prob, input_dict, selected_surname)
+    email = generate_email(avg_prob, input_dict, explanation, selected_surname)
 
     st.write("### Explanation")
     st.write(explanation)
+
+    st.write("### Email")
+    st.write(email)
+
+    st.write("### Charts")
+    model_prob_chart = create_model_probability_chart(probabilities)
+    st.plotly_chart(model_prob_chart)
+
+    gauge_chart = create_gauge_chart(avg_prob)
+st.plotly_chart(gauge_chart)
