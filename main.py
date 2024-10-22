@@ -83,7 +83,7 @@ def generate_email(probability, input_dict, explanation, surname):
     Here is the explanation for the prediction:
     {explanation}
     Generate an email to the customer based on the above information and explanation about them to ask them to stay with the bank if they are at risk of churning, or offer them more incentives so they that remain loyal customers to the bank.
-    Make sure to list out a set of incentives to stay based on their information, in bullet points format. Don't ever mention the probability of churning, or the machine learning model, or say anything like 'Based on the machine learning model's prediction and top 10 most important features...'.
+    Make sure to list out a set of incentives to stay based on their information, in bullet points format and line breaks after each bullet point. Don't ever mention the probability of churning, or the machine learning model, or say anything like 'Based on the machine learning model's prediction and top 10 most important features...'.
 
     """
 
@@ -344,4 +344,4 @@ if selected_customer_option:
     st.plotly_chart(model_prob_chart)
 
     gauge_chart = create_gauge_chart(avg_prob)
-st.plotly_chart(gauge_chart)
+    st.plotly_chart(gauge_chart)
