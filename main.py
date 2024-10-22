@@ -55,6 +55,7 @@ def explain_prediction(probability, input_dict, surname):
   Don't mention or repeat the process you used to make the prediction, just explain the prediction.
   Don't use let's or other interactive language, just explain the prediction.
   Make 3 sentences have a 1 line break between them. Don't use any other line breaks or no line breaks at all.
+  Convert any features names to their actual names, not the encoded ones, in plain text English.
   Example 1:
   Based on the provided customer information and summary statistics, customer Brownless has a credit score of 581, age of 34, tenure of 1, balance of 101633, number of products of 1, has a credit card of 1, is an inactive member of 0, estimated salary of 110431.51, and belongs to the geography of Germany.
 
