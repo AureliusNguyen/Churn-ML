@@ -1,14 +1,18 @@
 import plotly.graph_objects as go
 
 
-def create_gauge_chart(probability):
-
+def create_gauge_chart(probability, position="left"):
     if probability < 0.3:
         color = "green"
     elif probability < 0.6:
         color = "yellow"
     else:
         color = "red"
+
+    if position == "left":
+        domain_x = [0, 0.5]
+    else:
+        domain_x = [0.5, 1]
 
     fig = go.Figure(
         go.Indicator(
@@ -43,15 +47,20 @@ def create_gauge_chart(probability):
         font={"color": "white"},
         width=400,
         height=300,
-        margin={"l": 20, "r": 20, "t": 50, "b": 20},
+        margin={"l": 20, "r": 20, "t": 40, "b": 20},
     )
 
     return fig
 
 
-def create_model_probability_chart(probabilities):
+def create_model_probability_chart(probabilities, position="left"):
     models = list(probabilities.keys())
     probs = list(probabilities.values())
+
+    if position == "left":
+        domain_x = [0, 0.5]
+    else:
+        domain_x = [0.5, 1]
 
     fig = go.Figure(
         data=[

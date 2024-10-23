@@ -83,7 +83,7 @@ def generate_email(probability, input_dict, explanation, surname):
     Here is the explanation for the prediction:
     {explanation}
     Generate an email to the customer based on the above information and explanation about them to ask them to stay with the bank if they are at risk of churning, or offer them more incentives so they that remain loyal customers to the bank.
-    Make sure to list out a set of incentives to stay based on their information, in bullet points format and line breaks after each bullet point. Don't ever mention the probability of churning, or the machine learning model, or say anything like 'Based on the machine learning model's prediction and top 10 most important features...'.
+    Make sure to list out a set of incentives to stay based on their information, in bullet points format and line breaks after each bullet point, dont format anything other than what are needed to create bullet points. Don't ever mention the probability of churning, or the machine learning model, or say anything like 'Based on the machine learning model's prediction and top 10 most important features...'.
 
     """
 
@@ -109,6 +109,8 @@ voting_clf = load_model("voting_clf.pkl")
 xgb_model = load_model("xgb_model.pkl")
 xgb_fe_model = load_model("xgboost_feature_engineered.pkl")
 xgb_SMOTE = load_model("xgboost_SMOTE.pkl")
+stacking_model = load_model("stacking_model.pkl")
+best_xgb_model = load_model("best_xgb_clf.pkl")
 
 
 def prepare_input(
@@ -186,8 +188,8 @@ def make_predictions(input_df, input_dict):
         "Random Forest": rf_model.predict_proba(input_df)[0][1],
         "K-Nearest Neighbor": knn_model.predict_proba(input_df)[0][1],
         "Support Vector Machine": svm_model.predict_proba(input_df)[0][1],
-        "Decision Tree": dt_model.predict_proba(input_df)[0][1],
-        "Naive Bayes": nb_model.predict_proba(input_df)[0][1],
+        # "Decision Tree": dt_model.predict_proba(input_df)[0][1],
+        # "Naive Bayes": nb_model.predict_proba(input_df)[0][1],
     }
 
     avg_prob = np.mean(list(probabilities.values()))
@@ -205,8 +207,10 @@ def make_predictions_2(input_df, input_dict):
     voting_prediction = int(voting_clf.predict(input_df)[0])
 
     probabilities = {
-        "XGBoost_Feature_Engineered": xgb_fe_model.predict_proba(input_df)[0][1],
-        "XGBoost_SMOTE": xgb_SMOTE.predict_proba(input_df)[0][1],
+        "XGBoost with Feature Engineering": xgb_fe_model.predict_proba(input_df)[0][1],
+        "XGBoost with SMOTE": xgb_SMOTE.predict_proba(input_df)[0][1],
+        "Best XGB": best_xgb_model.predict_proba(input_df)[0][1],
+        "Stacking": stacking_model.predict_proba(input_df)[0][1],
     }
 
     avg_prob = np.mean(list(probabilities.values()))
@@ -220,6 +224,8 @@ def make_predictions_2(input_df, input_dict):
     st.write(f"Average Probability (XGBoost models): {avg_prob:.3f}")
     return avg_prob, probabilities
 
+
+st.set_page_config(layout="wide")
 
 st.title("Customer Churn Prediction")
 
@@ -326,22 +332,36 @@ if selected_customer_option:
         is_active_member,
         estimated_salary,
     )
+    if st.button("Predict and Analyze"):
+        avg_prob, probabilities = make_predictions(input_df, input_dict)
+        avg_prob_2, probabilities_2 = make_predictions_2(input_df_2, input_dict_2)
 
-    avg_prob, probabilities = make_predictions(input_df, input_dict)
-    avg_prob_2, probabilities_2 = make_predictions_2(input_df_2, input_dict_2)
+        explanation = explain_prediction(avg_prob, input_dict_2, selected_surname)
+        email = generate_email(avg_prob, input_dict_2, explanation, selected_surname)
 
-    explanation = explain_prediction(avg_prob, input_dict, selected_surname)
-    email = generate_email(avg_prob, input_dict, explanation, selected_surname)
+        st.write("### Explanation")
+        st.write(explanation)
 
-    st.write("### Explanation")
-    st.write(explanation)
+        st.write("### Email")
+        st.write(email)
 
-    st.write("### Email")
-    st.write(email)
+        st.write("### Charts")
 
-    st.write("### Charts")
-    model_prob_chart = create_model_probability_chart(probabilities)
-    st.plotly_chart(model_prob_chart)
+        coll1, coll2 = st.columns(2)
 
-    gauge_chart = create_gauge_chart(avg_prob)
-    st.plotly_chart(gauge_chart)
+        with coll1:
+            st.write("#### Weak Model Probabilities")
+            model_prob_chart = create_model_probability_chart(probabilities)
+            st.plotly_chart(model_prob_chart)
+
+            gauge_chart = create_gauge_chart(avg_prob)
+            st.plotly_chart(gauge_chart)
+        with coll2:
+            st.write("#### Advanced Model Probabilities")
+            model_prob_chart_2 = create_model_probability_chart(
+                probabilities_2, "right"
+            )
+            st.plotly_chart(model_prob_chart_2)
+
+            gauge_chart_2 = create_gauge_chart(avg_prob_2, "right")
+            st.plotly_chart(gauge_chart_2)
