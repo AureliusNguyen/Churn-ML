@@ -11,9 +11,11 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from features import CustomerInput, prepare_advanced, prepare_basic
 from inference import (
@@ -23,6 +25,25 @@ from inference import (
     shap_for_advanced,
 )
 from llm import explain_prediction, generate_email
+
+
+def real_ip(request: Request) -> str:
+    """Extract the originating client IP, honoring proxy headers.
+
+    HF Spaces front the container with a proxy that sets X-Forwarded-For
+    and X-Proxied-Host; without trusting one of those, every request
+    looks like it came from the proxy's internal IP and the limiter
+    would treat all traffic as a single client.
+    """
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
+limiter = Limiter(key_func=real_ip)
 
 load_dotenv()
 
@@ -42,6 +63,8 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Churn Report API", version="1.0.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _raw_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
 # Defense in depth: a wildcard combined with allow_credentials=True is a
@@ -189,7 +212,8 @@ def get_customer(customer_id: int):
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(customer: CustomerInput):
+@limiter.limit("60/minute")
+def predict(request: Request, customer: CustomerInput):
     basic_df, _ = prepare_basic(customer)
     adv_df, _ = prepare_advanced(customer)
     basic, basic_avg = predict_basic(basic_df)
@@ -200,14 +224,16 @@ def predict(customer: CustomerInput):
 
 
 @app.post("/shap", response_model=ShapResponse)
-def shap_endpoint(customer: CustomerInput):
+@limiter.limit("60/minute")
+def shap_endpoint(request: Request, customer: CustomerInput):
     adv_df, _ = prepare_advanced(customer)
     result = shap_for_advanced(adv_df)
     return ShapResponse(**result)
 
 
 @app.post("/explain", response_model=ExplainResponse)
-def explain(req: ExplainRequest):
+@limiter.limit("10/minute")
+def explain(request: Request, req: ExplainRequest):
     _, input_dict = prepare_advanced(req.customer)
     text = explain_prediction(
         req.probability,
@@ -220,7 +246,8 @@ def explain(req: ExplainRequest):
 
 
 @app.post("/email", response_model=ExplainResponse)
-def email(req: EmailRequest):
+@limiter.limit("10/minute")
+def email(request: Request, req: EmailRequest):
     _, input_dict = prepare_advanced(req.customer)
     text = generate_email(req.probability, input_dict, req.explanation, req.surname)
     return ExplainResponse(text=text)
