@@ -43,13 +43,23 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Churn Report API", version="1.0.0", lifespan=lifespan)
 
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+_raw_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+# Defense in depth: a wildcard combined with allow_credentials=True is a
+# common footgun -- browsers reject it but FastAPI/Starlette will happily
+# echo the request origin instead. Reject wildcards explicitly so a config
+# mistake doesn't silently open the API to every origin with credentials.
+if "*" in _raw_origins:
+    raise RuntimeError(
+        "ALLOWED_ORIGINS='*' is unsafe with allow_credentials=True. "
+        "List specific origins instead."
+    )
+print(f"[cors] allowed origins: {_raw_origins}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
+    allow_origins=_raw_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -59,7 +69,7 @@ app.add_middleware(
 class CustomerSearchHit(BaseModel):
     customer_id: int
     surname: str
-    geography: str
+    location: str
     age: int
 
 
@@ -67,7 +77,7 @@ class CustomerDetail(BaseModel):
     customer_id: int
     surname: str
     credit_score: int
-    geography: str
+    location: str
     gender: str
     age: int
     tenure: int
@@ -125,7 +135,10 @@ def health():
 
 
 @app.get("/customers", response_model=list[CustomerSearchHit])
-def search_customers(q: str = Query(default="", description="Surname or CustomerId substring"), limit: int = 20):
+def search_customers(
+    q: str = Query(default="", description="Surname or CustomerId substring"),
+    limit: int = Query(default=20, ge=1, le=100),
+):
     df = state["df"]
     if df is None:
         raise HTTPException(503, "Dataset not loaded yet.")
@@ -142,7 +155,7 @@ def search_customers(q: str = Query(default="", description="Surname or Customer
         CustomerSearchHit(
             customer_id=int(r["CustomerId"]),
             surname=str(r["Surname"]),
-            geography=str(r["Geography"]),
+            location=str(r["Geography"]),
             age=int(r["Age"]),
         )
         for _, r in rows.iterrows()
@@ -162,7 +175,7 @@ def get_customer(customer_id: int):
         customer_id=int(r["CustomerId"]),
         surname=str(r["Surname"]),
         credit_score=int(r["CreditScore"]),
-        geography=str(r["Geography"]),
+        location=str(r["Geography"]),
         gender=str(r["Gender"]),
         age=int(r["Age"]),
         tenure=int(r["Tenure"]),

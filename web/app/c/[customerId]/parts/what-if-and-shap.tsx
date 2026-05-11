@@ -203,7 +203,7 @@ export function WhatIfAndShap({
             />
           </div>
 
-          <div className="mt-6 flex items-center gap-3 text-[13px]">
+          <div className="mt-6 flex items-center gap-4 text-[13px]">
             <button
               type="button"
               onClick={reset}
@@ -211,7 +211,6 @@ export function WhatIfAndShap({
             >
               Restore {surname}&rsquo;s actual values
             </button>
-            <span className="text-mute">&middot;</span>
             <span className={`font-mono tabular ${pending ? "text-mute" : "text-graph"}`}>
               {pending ? "computing..." : "synced"}
             </span>

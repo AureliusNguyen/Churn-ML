@@ -62,7 +62,7 @@ export function ModelView({ prediction }: Props) {
             </div>
             <p className="marginalia mt-5 max-w-[44ch]">
               Feature engineering and class-rebalancing tend to sharpen these
-              estimates -- for better or for worse on any given customer.
+              estimates, for better or for worse on any given customer.
             </p>
           </div>
         </div>

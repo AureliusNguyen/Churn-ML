@@ -15,16 +15,16 @@ export function Colophon() {
             Models in this issue
           </div>
           <ul className="mt-2 space-y-1 font-mono text-[11px] tabular text-graph">
-            <li>XGBoost &middot; XGBoost (FE) &middot; XGBoost (SMOTE)</li>
-            <li>Best XGB &middot; Stacking</li>
-            <li>Random Forest &middot; KNN &middot; SVM</li>
+            <li>XGBoost / XGBoost (FE) / XGBoost (SMOTE)</li>
+            <li>Best XGB / Stacking</li>
+            <li>Random Forest / KNN / SVM</li>
             <li>Voting classifier (advisory)</li>
           </ul>
         </div>
         <div>
           <div className="text-[11px] uppercase tracking-[0.18em] text-mute">Data</div>
           <p className="mt-2 font-mono text-[11px] tabular text-graph">
-            churn.csv &middot; 10,000 rows
+            churn.csv / 10,000 rows
             <br />
             target: Exited
           </p>
@@ -32,7 +32,7 @@ export function Colophon() {
             Stack
           </div>
           <p className="mt-2 font-mono text-[11px] tabular text-graph">
-            Next.js &middot; Tailwind &middot; Motion &middot; FastAPI
+            Next.js / Tailwind / Motion / FastAPI
           </p>
         </div>
       </div>

@@ -74,9 +74,9 @@ export function ByTheNumbers({ customer, prediction }: Props) {
             </div>
           </div>
           <p className="marginalia mt-4 max-w-[44ch]">
-            The advanced ensemble adds three engineered features -- lifetime
-            value, tenure-to-age, and an age band -- to the same input. We
-            treat its average as the headline figure for this report.
+            The advanced ensemble adds three engineered features to the same
+            input (lifetime value, tenure-to-age, and an age band). We treat
+            its average as the headline figure for this report.
           </p>
         </aside>
       </section>

@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   FIXTURE_CUSTOMER,
   FIXTURE_EXPLANATION,
@@ -14,8 +16,9 @@ import type {
   ShapResponse,
 } from "./types";
 
-const FASTAPI_URL =
-  process.env.FASTAPI_URL || process.env.NEXT_PUBLIC_FASTAPI_URL;
+// Server-only -- the FastAPI URL never reaches the client. Client-side
+// requests go through /api/proxy/* (web/app/api/proxy/[...path]/route.ts).
+const FASTAPI_URL = process.env.FASTAPI_URL;
 
 /** True when no backend URL is configured -- frontend runs on fixtures. */
 const FIXTURE_MODE = !FASTAPI_URL;

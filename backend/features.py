@@ -1,20 +1,22 @@
 """Feature preparation -- ports prepare_input/prepare_input_2 from main.py."""
 from __future__ import annotations
 
+from typing import Literal
+
 import pandas as pd
 from pydantic import BaseModel, Field
 
 
-GEOGRAPHIES = ("France", "Germany", "Spain")
-GENDERS = ("Male", "Female")
+Location = Literal["France", "Germany", "Spain"]
+Gender = Literal["Male", "Female"]
 
 
 class CustomerInput(BaseModel):
     """Exactly the 10 fields the original Streamlit form collected."""
 
     credit_score: int = Field(ge=300, le=850)
-    location: str
-    gender: str
+    location: Location
+    gender: Gender
     age: int = Field(ge=18, le=100)
     tenure: int = Field(ge=0, le=50)
     balance: float = Field(ge=0)

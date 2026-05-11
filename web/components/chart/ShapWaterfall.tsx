@@ -13,6 +13,12 @@ type Props = {
   topN?: number;
 };
 
+function fmtVal(v: number): string {
+  if (Number.isInteger(v)) return v.toString();
+  if (Math.abs(v) >= 1000) return v.toFixed(0);
+  return v.toFixed(2);
+}
+
 export function ShapWaterfall({ items, baseProb, predictedProb, topN = 8 }: Props) {
   const sorted = useMemo(() => {
     return [...items]
@@ -27,11 +33,11 @@ export function ShapWaterfall({ items, baseProb, predictedProb, topN = 8 }: Prop
 
   return (
     <div className="space-y-1">
-      <div className="mb-3 flex items-baseline justify-between text-[12px] uppercase tracking-[0.14em] text-mute">
-        <span>Pushes toward staying</span>
+      <div className="mb-3 flex items-baseline justify-between text-[11px] uppercase tracking-[0.14em] text-mute">
+        <span>Pulls toward staying</span>
         <span>Pushes toward leaving</span>
       </div>
-      <ol className="space-y-1.5">
+      <ol className="space-y-3">
         <AnimatePresence initial={false}>
           {sorted.map((s, i) => {
             const positive = s.contribution > 0;
@@ -48,37 +54,49 @@ export function ShapWaterfall({ items, baseProb, predictedProb, topN = 8 }: Prop
                   ease: [0.2, 0, 0, 1],
                   delay: i * 0.04,
                 }}
-                className="grid grid-cols-[1fr_3fr_1fr_auto] items-center gap-3"
+                className="space-y-1"
               >
-                <div className="truncate text-right text-[13px] text-graph">
-                  {featureLabel(s.feature)}
+                {/* Row 1: feature name (wraps freely), then numeric value */}
+                <div className="flex items-baseline justify-between gap-3 text-[13px] leading-tight">
+                  <div className="min-w-0 flex-1 text-graph">
+                    {featureLabel(s.feature)}
+                  </div>
+                  <div className="font-mono text-[12px] tabular text-mute">
+                    {fmtVal(s.value)}
+                  </div>
                 </div>
-                <div className="relative flex h-[12px] items-center">
-                  <div className="absolute left-1/2 top-0 h-full w-px bg-rule/40" />
-                  {positive ? (
-                    <motion.div
-                      key={`p-${s.feature}-${s.contribution}`}
-                      className="absolute left-1/2 h-full bg-terra"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${w / 2}%` }}
-                      transition={{ duration: 0.45, ease: [0.2, 0, 0, 1] }}
-                    />
-                  ) : (
-                    <motion.div
-                      key={`n-${s.feature}-${s.contribution}`}
-                      className="absolute right-1/2 h-full bg-ochre"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${w / 2}%` }}
-                      transition={{ duration: 0.45, ease: [0.2, 0, 0, 1] }}
-                    />
-                  )}
-                </div>
-                <div className="font-mono text-[12px] tabular text-graph">
-                  {s.contribution > 0 ? "+" : ""}
-                  {s.contribution.toFixed(3)}
-                </div>
-                <div className="font-mono text-[11px] tabular text-mute">
-                  {Number.isInteger(s.value) ? s.value : s.value.toFixed(1)}
+
+                {/* Row 2: centred bar with contribution label hugging it */}
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-[10px] flex-1 items-center">
+                    <div className="absolute left-1/2 top-0 h-full w-px bg-rule/40" />
+                    {positive ? (
+                      <motion.div
+                        key={`p-${s.feature}-${s.contribution}`}
+                        className="absolute left-1/2 h-full bg-terra"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${w / 2}%` }}
+                        transition={{ duration: 0.45, ease: [0.2, 0, 0, 1] }}
+                      />
+                    ) : (
+                      <motion.div
+                        key={`n-${s.feature}-${s.contribution}`}
+                        className="absolute right-1/2 h-full bg-ochre"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${w / 2}%` }}
+                        transition={{ duration: 0.45, ease: [0.2, 0, 0, 1] }}
+                      />
+                    )}
+                  </div>
+                  <div
+                    className={`font-mono text-[12px] tabular ${
+                      positive ? "text-terra" : "text-ochre"
+                    }`}
+                    style={{ minWidth: 56, textAlign: "right" }}
+                  >
+                    {s.contribution > 0 ? "+" : ""}
+                    {s.contribution.toFixed(3)}
+                  </div>
                 </div>
               </motion.li>
             );
@@ -86,7 +104,7 @@ export function ShapWaterfall({ items, baseProb, predictedProb, topN = 8 }: Prop
         </AnimatePresence>
       </ol>
 
-      <div className="mt-5 grid grid-cols-2 gap-6 border-t border-rule/30 pt-4 text-[12px] uppercase tracking-[0.14em] text-mute">
+      <div className="mt-6 grid grid-cols-2 gap-6 border-t border-rule/30 pt-4 text-[11px] uppercase tracking-[0.14em] text-mute">
         <div>
           Baseline:{" "}
           <span className="font-mono normal-case tracking-normal text-ink">

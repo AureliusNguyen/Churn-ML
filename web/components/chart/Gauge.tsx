@@ -7,7 +7,7 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 type Props = {
   /** 0..1 */
@@ -53,16 +53,25 @@ export function Gauge({ probability, size = 240, label }: Props) {
   // Drive the SVG transform attribute imperatively on every spring frame.
   // Motion does not reliably subscribe MotionValue<string> to SVG attribute
   // props, and CSS transform-origin behaves unpredictably on <g> across
-  // browsers, so we write the attribute directly via a ref. The fallback
-  // value below is the rotation at v=0 (start of sweep) so SSR markup is
-  // valid before the first client tick.
+  // browsers, so we write the attribute directly via a ref. We deliberately
+  // do NOT set a React-managed `transform` prop on the <g> -- it would
+  // clobber our imperatively-set attribute on every re-render and snap the
+  // needle back to the initial angle.
   const needleRef = useRef<SVGGElement>(null);
   useMotionValueEvent(spring, "change", (v) => {
     const angle = angleStart + v * SWEEP;
     needleRef.current?.setAttribute("transform", `rotate(${angle})`);
   });
 
-  const initialAngle = angleStart + (reduced ? target : 0) * SWEEP;
+  // Seed the transform attribute on first paint (before the spring fires
+  // its first onChange) so the needle isn't drawn at rotate(0) for one
+  // frame and then jumps.
+  useLayoutEffect(() => {
+    const v = reduced ? target : 0;
+    const angle = angleStart + v * SWEEP;
+    needleRef.current?.setAttribute("transform", `rotate(${angle})`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // arc segments: low (0-30), mid (30-60), high (60-100)
   const lowEnd = angleStart + 0.3 * SWEEP;
@@ -131,8 +140,10 @@ export function Gauge({ probability, size = 240, label }: Props) {
           );
         })}
 
-        {/* Needle: ref-driven SVG transform (see useMotionValueEvent above) */}
-        <g ref={needleRef} transform={`rotate(${initialAngle})`}>
+        {/* Needle: ref-driven SVG transform (set by useLayoutEffect on
+            mount, then by useMotionValueEvent on every spring frame). No
+            React-managed transform prop -- it would clobber the value. */}
+        <g ref={needleRef}>
           <line
             x1={0}
             y1={0}

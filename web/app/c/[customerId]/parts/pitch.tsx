@@ -75,7 +75,7 @@ export function Pitch({ customer, surname, probability, explanation }: Props) {
             <span>From</span>
             <span className="text-graph">Retention desk</span>
             <span>Re</span>
-            <span className="text-graph">{surname} -- renewal of relationship</span>
+            <span className="text-graph">{surname}, renewal of relationship</span>
           </div>
           {email ? (
             <div className="font-display whitespace-pre-line text-[18px] leading-[1.7] text-ink">
@@ -84,8 +84,8 @@ export function Pitch({ customer, surname, probability, explanation }: Props) {
           ) : (
             <div className="font-display text-[18px] italic leading-[1.7] text-mute">
               No draft yet. The page is intentionally quiet until you ask for
-              one -- sending the prompt to the model takes a moment and
-              costs a small amount of tokens.
+              one. Sending the prompt to the model takes a moment and costs a
+              small amount of tokens.
             </div>
           )}
         </article>
