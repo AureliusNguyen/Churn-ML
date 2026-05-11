@@ -2,9 +2,14 @@
 
 Loads ten trained models + the dataset once at startup, then exposes the
 endpoints the Next.js frontend calls.
-"""
-from __future__ import annotations
 
+NOTE: deliberately no `from __future__ import annotations` here -- with
+slowapi's wrapper around our route handlers, FastAPI's runtime
+introspection can't resolve forward-referenced types like CustomerInput
+(they look up the wrapper's __globals__ instead of this module's), so the
+app fails to import. With this future import removed, the annotations
+are real types at decoration time and slowapi composes cleanly.
+"""
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
