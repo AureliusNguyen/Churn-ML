@@ -2,12 +2,24 @@
 from __future__ import annotations
 
 import pickle
+import warnings
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import shap
+
+# The pickled sklearn models (RandomForest, KNN, SVC) were originally
+# trained on plain numpy arrays without column names. We pass them
+# pandas DataFrames whose column order matches the training order, so
+# predictions are correct -- but sklearn 1.5+ warns about the
+# name/no-name mismatch on every call. Silence that one warning only.
+warnings.filterwarnings(
+    'ignore',
+    message='X has feature names, but',
+    category=UserWarning,
+)
 
 MODELS_DIR = Path(__file__).parent / "models"
 

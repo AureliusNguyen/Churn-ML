@@ -157,6 +157,14 @@ class EmailRequest(BaseModel):
 # ---------- endpoints ----------
 
 
+@app.get("/", include_in_schema=False)
+def root():
+    """Land any visitor (or HF's internal monitor) on the auto Swagger UI
+    instead of a 404 for /."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs", status_code=307)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "models_loaded": state["models_loaded"]}
