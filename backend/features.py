@@ -1,6 +1,10 @@
-"""Feature preparation -- ports prepare_input/prepare_input_2 from main.py."""
-from __future__ import annotations
+"""Feature preparation -- ports prepare_input/prepare_input_2 from main.py.
 
+No `from __future__ import annotations` here: the Pydantic CustomerInput
+below is consumed by FastAPI route introspection through slowapi's
+wrapper, and string-form annotations confuse the forward-ref resolution.
+Real type objects keep this simple.
+"""
 from typing import Literal
 
 import pandas as pd
