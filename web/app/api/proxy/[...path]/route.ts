@@ -15,7 +15,20 @@ async function forward(req: NextRequest, params: { path: string[] }) {
   }
 
   const path = params.path.join("/");
-  const url = new URL(`${FASTAPI_URL}/${path}`);
+  let url: URL;
+  try {
+    url = new URL(`${FASTAPI_URL.replace(/\/$/, "")}/${path}`);
+  } catch (err) {
+    return new NextResponse(
+      JSON.stringify({
+        error: "Invalid FASTAPI_URL",
+        fastapi_url: FASTAPI_URL,
+        message: err instanceof Error ? err.message : String(err),
+      }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   for (const [k, v] of req.nextUrl.searchParams.entries()) {
     url.searchParams.set(k, v);
   }
@@ -29,14 +42,32 @@ async function forward(req: NextRequest, params: { path: string[] }) {
     init.body = await req.text();
   }
 
-  const upstream = await fetch(url.toString(), init);
-  const body = await upstream.text();
-  return new NextResponse(body, {
-    status: upstream.status,
-    headers: {
-      "Content-Type": upstream.headers.get("content-type") || "application/json",
-    },
-  });
+  try {
+    const upstream = await fetch(url.toString(), init);
+    const body = await upstream.text();
+    return new NextResponse(body, {
+      status: upstream.status,
+      headers: {
+        "Content-Type":
+          upstream.headers.get("content-type") || "application/json",
+      },
+    });
+  } catch (err) {
+    // Surface the actual fetch failure (DNS, TLS, timeout, etc.) so the
+    // client + logs can see what went wrong instead of a bare 500.
+    return new NextResponse(
+      JSON.stringify({
+        error: "Upstream fetch failed",
+        upstream: url.toString(),
+        message: err instanceof Error ? err.message : String(err),
+        cause:
+          err instanceof Error && "cause" in err
+            ? String((err as Error & { cause?: unknown }).cause)
+            : undefined,
+      }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
