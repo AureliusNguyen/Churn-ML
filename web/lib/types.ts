@@ -20,7 +20,7 @@ export type CustomerDetail = CustomerInput & {
 export type CustomerSearchHit = {
   customer_id: number;
   surname: string;
-  geography: string;
+  location: string;
   age: number;
 };
 

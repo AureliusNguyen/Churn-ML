@@ -141,7 +141,7 @@ export const clientApi = {
             {
               customer_id: FIXTURE_CUSTOMER.customer_id,
               surname: FIXTURE_CUSTOMER.surname,
-              geography: FIXTURE_CUSTOMER.location,
+              location: FIXTURE_CUSTOMER.location,
               age: FIXTURE_CUSTOMER.age,
             },
           ]
